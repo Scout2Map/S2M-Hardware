@@ -190,4 +190,3 @@ ros2 topic echo /scan --once | head -20
 - 정밀 3D mesh 없이 box/cylinder primitive geometry로 진행. Gazebo 물리엔진은 `<collision>` geometry 기준으로 동작하므로 시각적 mesh는 추후 CAD 확정 시 교체해도 무방하다.
 - 요철·슬립 지형은 Gazebo heightmap geometry(grayscale 이미지 기반 높낮이) 및 `<surface><friction><ode><mu>` 파라미터 조합으로 재현 가능함을 확인, `worlds/slip_test.world.sdf`에 반영했다. 요철 구간은 heightmap, 슬립 구간은 별도 저마찰(mu=0.05) 박스로 분리 구성되어 있다.
 - 4륜 스키드 스티어는 `gz-sim-diff-drive-system` 플러그인에 `left_joint`/`right_joint`를 각각 2개(front+rear)씩 등록하는 방식으로 구현했다.
-- 트랙폭(240mm)이 차체 폭(220mm)보다 넓어 바퀴가 차체 좌우로 각 10mm씩(바퀴 폭 포함 시 약 23mm) 돌출되는 구조다. 스키드 스티어 안정성을 위한 의도된 설계인지 확인 필요.
