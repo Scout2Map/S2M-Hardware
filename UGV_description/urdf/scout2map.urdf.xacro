@@ -49,6 +49,13 @@
   <!-- sensor offsets, measured from base_link origin (platform bottom face) -->
   <xacro:property name="lidar_offset_z" value="0.150"/>
   <xacro:property name="imu_offset_z"   value="0.065"/>
+
+  <!-- 2026-08-23: re-checked physically, the RPLiDAR C1 is mounted with its
+       own angle-zero facing the chassis nose as expected, no 180 degree
+       correction needed. Left as a property (rather than removed outright)
+       so a future remount only needs this one value changed again, plus a
+       repeat of the hand-in-front-of-the-lidar test with Fixed Frame set to
+       base_link before trusting whatever number goes here. -->
   <xacro:property name="lidar_yaw_offset" value="0"/>
 
   <!-- ==================== materials, cosmetic only ==================== -->
