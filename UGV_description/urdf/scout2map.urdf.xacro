@@ -49,6 +49,7 @@
   <!-- sensor offsets, measured from base_link origin (platform bottom face) -->
   <xacro:property name="lidar_offset_z" value="0.150"/>
   <xacro:property name="imu_offset_z"   value="0.065"/>
+  <xacro:property name="lidar_yaw_offset" value="0"/>
 
   <!-- ==================== materials, cosmetic only ==================== -->
   <material name="chassis_gray"><color rgba="0.25 0.25 0.28 1.0"/></material>
@@ -128,7 +129,7 @@
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
-    <origin xyz="0 0 ${lidar_offset_z}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${lidar_offset_z}" rpy="0 0 ${lidar_yaw_offset}"/>
   </joint>
 
   <!-- ==================== imu_link (BNO055) ==================== -->
