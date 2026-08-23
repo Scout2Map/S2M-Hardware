@@ -4,15 +4,24 @@
   <!-- ==================== dimensions confirmed from S2M-Hardware README ==================== -->
   <!-- base_link origin = center of chassis platform bottom face -->
 
+  <!-- Ground clearance: how far the chassis underside (base_link origin)
+       sits above the floor. This is the one number that fixes where "the
+       floor" is relative to base_link; everything wheel-related below is
+       derived from it plus wheel_radius, so changing tyres later does not
+       require touching this or re-deriving the wheel offset by hand. -->
+  <xacro:property name="ground_clearance" value="0.020"/>
+
   <!-- chassis -->
   <xacro:property name="chassis_length" value="0.265"/>
   <xacro:property name="chassis_width"  value="0.220"/>
-  <xacro:property name="chassis_height" value="0.160"/>
+  <xacro:property name="chassis_height" value="0.150"/>
   <xacro:property name="chassis_mass"   value="1.8"/>
 
-  <!-- chassis inertia, box approximation about center of mass -->
-  <xacro:property name="chassis_ixx" value="0.0111"/>
-  <xacro:property name="chassis_iyy" value="0.0144"/>
+  <!-- chassis inertia, box approximation about center of mass.
+       Recomputed for chassis_height=0.150 (Ixx, Iyy depend on height; Izz
+       does not, so it is unchanged from the 0.160 value). -->
+  <xacro:property name="chassis_ixx" value="0.01064"/>
+  <xacro:property name="chassis_iyy" value="0.01391"/>
   <xacro:property name="chassis_izz" value="0.0178"/>
 
   <!-- wheel -->
@@ -21,7 +30,17 @@
   <xacro:property name="wheel_mass"   value="0.035"/>
   <xacro:property name="track_width"  value="0.240"/>
   <xacro:property name="wheel_base"   value="0.140"/>
-  <xacro:property name="bracket_drop" value="0.035"/>
+
+  <!-- Wheel axle height relative to base_link. The wheel must touch the
+       floor (z=0), and the floor sits ground_clearance below base_link
+       (z=-ground_clearance), so the axle is wheel_radius above that floor
+       line: wheel_radius - ground_clearance. With the values above this is
+       positive (+13mm) — the axle sits slightly above the chassis underside,
+       inside the mounting bracket, not below it as the old fixed
+       "bracket_drop" constant assumed. That old constant put the wheel
+       68mm below base_link with no reference to an actual floor, which is
+       why the wheel rendered through the RViz ground grid. -->
+  <xacro:property name="wheel_axle_z" value="${wheel_radius - ground_clearance}"/>
 
   <!-- wheel inertia, cylinder approximation -->
   <xacro:property name="wheel_izz_spin" value="0.0000191"/>
@@ -81,7 +100,7 @@
     <joint name="${prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child link="${prefix}_wheel_link"/>
-      <origin xyz="${x_sign*wheel_base/2} ${y_sign*track_width/2} ${-bracket_drop}" rpy="0 0 0"/>
+      <origin xyz="${x_sign*wheel_base/2} ${y_sign*track_width/2} ${wheel_axle_z}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
     </joint>
   </xacro:macro>

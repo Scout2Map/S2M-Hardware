@@ -14,9 +14,14 @@ def generate_launch_description():
 
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
+    z_pose = LaunchConfiguration('z_pose')
 
     declare_x = DeclareLaunchArgument('x_pose', default_value='0.0')
     declare_y = DeclareLaunchArgument('y_pose', default_value='0.0')
+    # base_link rests at ground_clearance (20mm, see the xacro) once the
+    # wheels settle. Spawning a bit above that lets Gazebo drop it onto the
+    # ground plane instead of starting the wheels already interpenetrating it.
+    declare_z = DeclareLaunchArgument('z_pose', default_value='0.05')
 
     # xacro is expanded here so robot_description is a plain URDF string
     robot_description = ParameterValue(
@@ -39,7 +44,7 @@ def generate_launch_description():
         arguments=[
             '-topic', 'robot_description',
             '-name', 'scout2map',
-            '-x', x_pose, '-y', y_pose, '-z', '0.05',
+            '-x', x_pose, '-y', y_pose, '-z', z_pose,
         ],
         output='screen',
     )
@@ -54,6 +59,7 @@ def generate_launch_description():
     return LaunchDescription([
         declare_x,
         declare_y,
+        declare_z,
         robot_state_publisher,
         spawn_entity,
         ros_gz_bridge,
