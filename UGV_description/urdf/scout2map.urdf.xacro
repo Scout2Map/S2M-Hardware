@@ -1,91 +1,72 @@
 <?xml version="1.0"?>
 <robot name="scout2map" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ==================== dimensions confirmed from S2M-Hardware README ==================== -->
-  <!-- base_link origin = center of chassis platform bottom face -->
-
-  <!-- Ground clearance: how far the chassis underside (base_link origin)
-       sits above the floor. This is the one number that fixes where "the
-       floor" is relative to base_link; everything wheel-related below is
-       derived from it plus wheel_radius, so changing tyres later does not
-       require touching this or re-deriving the wheel offset by hand. -->
+  <!-- ground clearance defines the gap below chassis -->
   <xacro:property name="ground_clearance" value="0.020"/>
 
-  <!-- chassis -->
+  <!-- chassis dimensions -->
   <xacro:property name="chassis_length" value="0.265"/>
   <xacro:property name="chassis_width"  value="0.220"/>
-  <xacro:property name="chassis_height" value="0.150"/>
+  <!-- chassis height is 110mm to reach 130mm from ground -->
+  <xacro:property name="chassis_height" value="0.110"/>
   <xacro:property name="chassis_mass"   value="1.8"/>
 
-  <!-- chassis inertia, box approximation about center of mass.
-       Recomputed for chassis_height=0.150 (Ixx, Iyy depend on height; Izz
-       does not, so it is unchanged from the 0.160 value). -->
-  <xacro:property name="chassis_ixx" value="0.01064"/>
-  <xacro:property name="chassis_iyy" value="0.01391"/>
-  <xacro:property name="chassis_izz" value="0.0178"/>
+  <!-- chassis inertia recalculated for 110mm height -->
+  <xacro:property name="chassis_ixx" value="0.009075"/>
+  <xacro:property name="chassis_iyy" value="0.012349"/>
+  <xacro:property name="chassis_izz" value="0.017794"/>
 
-  <!-- wheel -->
+  <!-- wheel dimensions -->
   <xacro:property name="wheel_radius" value="0.033"/>
   <xacro:property name="wheel_width"  value="0.026"/>
   <xacro:property name="wheel_mass"   value="0.035"/>
   <xacro:property name="track_width"  value="0.240"/>
   <xacro:property name="wheel_base"   value="0.140"/>
 
-  <!-- Wheel axle height relative to base_link. The wheel must touch the
-       floor (z=0), and the floor sits ground_clearance below base_link
-       (z=-ground_clearance), so the axle is wheel_radius above that floor
-       line: wheel_radius - ground_clearance. With the values above this is
-       positive (+13mm) — the axle sits slightly above the chassis underside,
-       inside the mounting bracket, not below it as the old fixed
-       "bracket_drop" constant assumed. That old constant put the wheel
-       68mm below base_link with no reference to an actual floor, which is
-       why the wheel rendered through the RViz ground grid. -->
-  <xacro:property name="wheel_axle_z" value="${wheel_radius - ground_clearance}"/>
+  <!-- base_link is now on the ground -->
+  <!-- wheel axle height is exactly the wheel radius -->
+  <xacro:property name="wheel_axle_z" value="${wheel_radius}"/>
 
-  <!-- wheel inertia, cylinder approximation -->
+  <!-- wheel inertia -->
   <xacro:property name="wheel_izz_spin" value="0.0000191"/>
   <xacro:property name="wheel_ixx_perp" value="0.0000115"/>
 
-  <!-- sensor offsets, measured from base_link origin (platform bottom face) -->
-  <xacro:property name="lidar_offset_z" value="0.150"/>
-  <xacro:property name="imu_offset_z"   value="0.065"/>
+  <!-- sensor offsets relative to the ground -->
+  <!-- lidar sits on top of chassis at 130mm from ground -->
+  <xacro:property name="lidar_offset_z" value="0.130"/>
+  <!-- imu offset includes ground clearance -->
+  <xacro:property name="imu_offset_z"   value="0.085"/>
 
-  <!-- 2026-08-23: re-checked physically, the RPLiDAR C1 is mounted with its
-       own angle-zero facing the chassis nose as expected, no 180 degree
-       correction needed. Left as a property (rather than removed outright)
-       so a future remount only needs this one value changed again, plus a
-       repeat of the hand-in-front-of-the-lidar test with Fixed Frame set to
-       base_link before trusting whatever number goes here. -->
-  <xacro:property name="lidar_yaw_offset" value="0"/>
+  <!-- rotated using pi to fix orientation -->
+  <xacro:property name="lidar_yaw_offset" value="3.14159265"/>
 
-  <!-- ==================== materials, cosmetic only ==================== -->
+  <!-- materials -->
   <material name="chassis_gray"><color rgba="0.25 0.25 0.28 1.0"/></material>
   <material name="wheel_black"><color rgba="0.05 0.05 0.05 1.0"/></material>
   <material name="lidar_orange"><color rgba="0.90 0.45 0.05 1.0"/></material>
   <material name="imu_red"><color rgba="0.70 0.05 0.05 1.0"/></material>
 
-  <!-- ==================== base_link ==================== -->
-  <!-- origin at platform bottom face center, box extends upward -->
+  <!-- chassis body -->
+  <!-- visual and collision are shifted up by ground clearance -->
   <link name="base_link">
     <visual>
-      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${ground_clearance + chassis_height/2}" rpy="0 0 0"/>
       <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
       <material name="chassis_gray"/>
     </visual>
     <collision>
-      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${ground_clearance + chassis_height/2}" rpy="0 0 0"/>
       <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
     </collision>
     <inertial>
-      <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${ground_clearance + chassis_height/2}" rpy="0 0 0"/>
       <mass value="${chassis_mass}"/>
       <inertia ixx="${chassis_ixx}" iyy="${chassis_iyy}" izz="${chassis_izz}"
                ixy="0" ixz="0" iyz="0"/>
     </inertial>
   </link>
 
-  <!-- ==================== wheel macro ==================== -->
-  <!-- x_sign: +1 front, -1 rear / y_sign: +1 left, -1 right -->
+  <!-- wheel generator macro -->
   <xacro:macro name="wheel" params="prefix x_sign y_sign">
     <link name="${prefix}_wheel_link">
       <visual>
@@ -113,12 +94,13 @@
     </joint>
   </xacro:macro>
 
+  <!-- instantiate wheels -->
   <xacro:wheel prefix="front_left"  x_sign="1"  y_sign="1"/>
   <xacro:wheel prefix="front_right" x_sign="1"  y_sign="-1"/>
   <xacro:wheel prefix="rear_left"   x_sign="-1" y_sign="1"/>
   <xacro:wheel prefix="rear_right"  x_sign="-1" y_sign="-1"/>
 
-  <!-- ==================== lidar_link (RPLiDAR C1) ==================== -->
+  <!-- lidar link -->
   <link name="lidar_link">
     <visual>
       <geometry><cylinder radius="0.03" length="0.04"/></geometry>
@@ -133,13 +115,14 @@
     </inertial>
   </link>
 
+  <!-- lidar joint -->
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
     <origin xyz="0 0 ${lidar_offset_z}" rpy="0 0 ${lidar_yaw_offset}"/>
   </joint>
 
-  <!-- ==================== imu_link (BNO055) ==================== -->
+  <!-- imu link -->
   <link name="imu_link">
     <visual>
       <geometry><box size="0.02 0.02 0.005"/></geometry>
@@ -154,15 +137,15 @@
     </inertial>
   </link>
 
+  <!-- imu joint -->
   <joint name="imu_joint" type="fixed">
     <parent link="base_link"/>
     <child link="imu_link"/>
     <origin xyz="0 0 ${imu_offset_z}" rpy="0 0 0"/>
   </joint>
 
-  <!-- ==================== gazebo: skid steer drive ==================== -->
-  <!-- diff_drive plugin accepts repeated left/right joint tags, this reproduces 4WD skid steer -->
-  <gazebo>
+  <!-- gazebo differential drive plugin -->
+<gazebo>
     <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
       <left_joint>front_left_wheel_joint</left_joint>
       <left_joint>rear_left_wheel_joint</left_joint>
@@ -173,14 +156,18 @@
       <odom_publish_frequency>30</odom_publish_frequency>
       <topic>cmd_vel</topic>
       <odom_topic>odom</odom_topic>
-      <tf_topic>tf</tf_topic>
+      
+      <!-- disable direct tf broadcast -->
+      <!-- allow ekf node to publish odom to base_link -->
+      <publish_odom_tf>false</publish_odom_tf>
+      
       <frame_id>odom</frame_id>
       <child_frame_id>base_link</child_frame_id>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher"/>
   </gazebo>
 
-  <!-- ==================== gazebo: RPLiDAR C1 sensor ==================== -->
+  <!-- gazebo rplidar sensor -->
   <gazebo reference="lidar_link">
     <sensor name="rplidar_c1" type="gpu_lidar">
       <pose>0 0 0 0 0 0</pose>
@@ -206,7 +193,7 @@
     </sensor>
   </gazebo>
 
-  <!-- ==================== gazebo: BNO055 IMU sensor ==================== -->
+  <!-- gazebo imu sensor -->
   <gazebo reference="imu_link">
     <sensor name="bno055" type="imu">
       <topic>imu</topic>

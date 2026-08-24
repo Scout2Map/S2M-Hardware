@@ -80,15 +80,13 @@ ros2 topic echo /scan --once | head -20
 
 ## 좌표계 정의
 
-모든 치수는 `base_link` 원점을 기준으로 한다. `base_link` 원점은 **차체 플랫폼 바닥면의 중앙**으로 정의한다.
+모든 치수는 `base_link` 원점을 기준으로 한다[cite: 3]. `base_link` 원점은 **지면(z=0)** 으로 정의하며, 차체 플랫폼 바닥면은 이 지면에서 20mm 띄워진다[cite: 3].
 
-- x축: 전진 방향 (+)
-- y축: 좌측 방향 (+)
-- z축: 상방 (+)
+- x축: 전진 방향 (+)[cite: 3]
+- y축: 좌측 방향 (+)[cite: 3]
+- z축: 상방 (+)[cite: 3]
 
-지면 기준을 먼저 고정한다: **차체 바닥면(`base_link` 원점)은 지면에서 20mm 띄워진다 (`ground_clearance`).** 즉 지면은 항상 `base_link` 기준 z = −20mm이고, 바퀴는 반드시 이 지면에 접지해야 한다. 바퀴 축 높이는 여기서 거꾸로 계산한다 — `wheel_radius − ground_clearance`(현재 33mm − 20mm = +13mm)로, 축이 차체 바닥면보다 살짝 위(브라켓 안쪽)에 물리고 바퀴가 그만큼 아래로 튀어나와 지면에 닿는 구조다. 타이어를 바꿔 `wheel_radius`가 달라져도 `ground_clearance`는 그대로 두고 축 높이만 자동으로 다시 계산되도록 xacro에 수식으로 넣어뒀다.
-
-> 이전 버전은 "브라켓 낙차 35mm"라는 고정값만 있고 실제 지면 위치에 대한 기준이 없어서, 계산해보면 지면이 `base_link` 기준 z = −68mm에 있는 셈이었다(축 −35mm − 반지름 33mm). RViz 그리드는 보통 오도메트리 시작점(≈`base_link` z=0)을 지면으로 그리기 때문에, 바퀴가 그 그리드보다 68mm 아래로 파고들어가 보이는 원인이었다. `ground_clearance` 기준으로 바꾸면서 이 불일치를 없앴다.
+지면 기준을 먼저 고정한다: `base_link` 가 지면 자체이므로, 차체 바닥면은 지면에서 20mm 띄워진다 ( `ground_clearance` )[cite: 3]. 바퀴는 반드시 이 지면에 접지해야 하므로 바퀴 축 높이는 `wheel_radius` (현재 33mm) 와 동일하게 설정된다[cite: 3]. 타이어를 바꿔 `wheel_radius` 가 달라져도 바퀴는 항상 지면 ( `z=0` ) 에 닿도록 xacro에 수식으로 넣어뒀다[cite: 3].
 
 ---
 
@@ -96,23 +94,23 @@ ros2 topic echo /scan --once | head -20
 
 | 항목 | 값 |
 |---|---|
-| 크기 (L × W × H) | 265mm × 220mm × 150mm |
-| 지면 간격 (ground clearance, 바닥면 → 지면) | 20mm |
-| 지면 기준 전체 높이 (지면 → 차체 상단) | 170mm (20 + 150) |
-| 질량 | 1800g |
-| 무게중심 오프셋 (x, y, z) | (0, 0, 75mm) — 기하학적 중심 근사치, 배터리/SBC 배치 확정 시 보정 필요 |
-| 관성 텐서 | 아래 표 참조 (박스 근사) |
+| 크기 (L × W × H) | 265mm × 220mm × 110mm |
+| 지면 간격 (ground clearance, 바닥면 → 지면) | 20mm[cite: 3] |
+| 지면 기준 전체 높이 (지면 → 차체 상단) | 130mm (20 + 110) |
+| 질량 | 1800g[cite: 3] |
+| 무게중심 오프셋 (x, y, z) | (0, 0, 75mm) — 기하학적 중심 근사치, 배터리/SBC 배치 확정 시 보정 필요[cite: 3] |
+| 관성 텐서 | 아래 표 참조 (박스 근사)[cite: 3] |
 
 ### 관성 텐서 (box 근사, 무게중심 기준)
 
 | 성분 | 값 (kg·m²) |
 |---|---|
-| I_xx | 0.01064 |
-| I_yy | 0.01391 |
-| I_zz | 0.0178 |
-| I_xy, I_xz, I_yz | 0 (좌우/전후 대칭 가정) |
+| I_xx | 0.009075 |
+| I_yy | 0.012349 |
+| I_zz | 0.017794 |
+| I_xy, I_xz, I_yz | 0 (좌우/전후 대칭 가정)[cite: 3] |
 
-> H가 160mm→150mm로 바뀌면서 높이에 의존하는 I_xx, I_yy만 재계산했다. I_zz는 L, W에만 의존해서 그대로다.
+> H가 150mm→110mm로 바뀌면서 전체 관성 텐서 값을 110mm 기준으로 재계산했다[cite: 3].
 
 ---
 
@@ -120,84 +118,70 @@ ros2 topic echo /scan --once | head -20
 
 | 항목 | 값 |
 |---|---|
-| 바퀴 지름 | 66mm (반지름 33mm) |
-| 바퀴 폭 | 26mm |
-| 바퀴 질량 | 개당 35g |
-| 트랙폭 (좌우 바퀴 중심 간 거리) | 240mm |
-| 휠베이스 (전후 바퀴 중심 간 거리) | 140mm |
-| 지면 간격 (ground clearance, 플랫폼 바닥면 → 지면) | 20mm |
-| 바퀴 축 높이 (플랫폼 바닥면 → 바퀴 축 중심, = 반지름 − 지면 간격) | +13mm |
+| 바퀴 지름 | 66mm (반지름 33mm)[cite: 3] |
+| 바퀴 폭 | 26mm[cite: 3] |
+| 바퀴 질량 | 개당 35g[cite: 3] |
+| 트랙폭 (좌우 바퀴 중심 간 거리) | 240mm[cite: 3] |
+| 휠베이스 (전후 바퀴 중심 간 거리) | 140mm[cite: 3] |
+| 지면 간격 (ground clearance, 플랫폼 바닥면 → 지면) | 20mm[cite: 3] |
+| 바퀴 축 높이 (지면 → 바퀴 축 중심, = 반지름) | +33mm |
 
-### 바퀴 장착 위치 (base_link 기준, 4륜 스키드 스티어)
+### 바퀴 장착 위치 (지면 base_link 기준, 4륜 스키드 스티어)
 
 | 바퀴 | x | y | z |
 |---|---|---|---|
-| front_left | +70mm | +120mm | +13mm |
-| front_right | +70mm | −120mm | +13mm |
-| rear_left | −70mm | +120mm | +13mm |
-| rear_right | −70mm | −120mm | +13mm |
-
-> 참고: 지면(바퀴 접지면)은 `base_link` 기준 z = −20mm(= −지면 간격) 위치이며, 이는 바퀴 반지름과 무관하게 항상 성립한다. 축 높이(+13mm)는 여기서 반지름을 빼는 방식으로 구한 값이라, 반지름이 바뀌면 축 높이만 따라 바뀌고 지면 위치(−20mm)는 그대로다.
-
-### 바퀴 관성 텐서 (실린더 근사)
-
-| 성분 | 값 (kg·m²) |
-|---|---|
-| 회전축(spin axis, 축 방향) | 1.91e-5 |
-| 수직축 2개(축과 수직인 두 방향) | 1.15e-5 |
+| front_left | +70mm[cite: 3] | +120mm[cite: 3] | +33mm |
+| front_right | +70mm[cite: 3] | −120mm[cite: 3] | +33mm |
+| rear_left | −70mm[cite: 3] | +120mm[cite: 3] | +33mm |
+| rear_right | −70mm[cite: 3] | −120mm[cite: 3] | +33mm |
 
 ---
 
-## 센서 장착 위치 (base_link 기준)
+## 센서 장착 위치 (지면 base_link 기준)
 
 ### LiDAR (RPLiDAR C1)
 
 | 항목 | 값 |
 |---|---|
-| 장착 위치 (x, y, z) | (0, 0, 150mm) — 플랫폼 바닥면 기준 |
-| 회전 방향/오프셋 | (0, 0, 0), 정면 기준 |
-| 스캔 범위 | 0.05 ~ 12m, 360° |
+| 장착 위치 (x, y, z) | (0, 0, 130mm) — 지면 기준 |
+| 회전 방향/오프셋 | (0, 0, 3.14159265), 정면 기준 180도 회전 보정 |
+| 스캔 범위 | 0.05 ~ 12m, 360°[cite: 3] |
 
 ### IMU (BNO055)
 
 | 항목 | 값 |
 |---|---|
-| 장착 위치 (x, y, z) | (0, 0, 65mm) — 플랫폼 바닥면 기준 |
+| 장착 위치 (x, y, z) | (0, 0, 85mm) — 지면 기준 |
 
 ---
 
 ## Xacro 속성값 참조
 
-`UGV_description/urdf/scout2map.urdf.xacro`에 이미 아래 값이 `xacro:property`로 반영되어 있다. 치수 변경 시 이 표와 함께 xacro 파일도 갱신한다. (단위: m, kg, rad)
+`UGV_description/urdf/scout2map.urdf.xacro` 에 이미 아래 값이 `xacro:property` 로 반영되어 있다[cite: 3]. 치수 변경 시 이 표와 함께 xacro 파일도 갱신한다[cite: 3]. (단위: m, kg, rad)[cite: 3]
 
 ```xml
-<!-- Ground clearance: base_link origin (chassis underside) above the floor.
-     Everything wheel-related is derived from this, not hard-coded. -->
+<!-- ground clearance defines the gap below chassis -->
 <xacro:property name="ground_clearance" value="0.020"/>
 
-<!-- Chassis -->
+<!-- chassis dimensions -->
 <xacro:property name="chassis_length" value="0.265"/>
-<xacro:property name="chassis_width" value="0.220"/>
-<xacro:property name="chassis_height" value="0.150"/>
-<xacro:property name="chassis_mass" value="1.8"/>
+<xacro:property name="chassis_width"  value="0.220"/>
+<!-- chassis height is 110mm to reach 130mm from ground -->
+<xacro:property name="chassis_height" value="0.110"/>
+<xacro:property name="chassis_mass"   value="1.8"/>
 
-<!-- Wheel -->
-<xacro:property name="wheel_radius" value="0.033"/>
-<xacro:property name="wheel_width" value="0.026"/>
-<xacro:property name="wheel_mass" value="0.035"/>
-<xacro:property name="track_width" value="0.240"/>
-<xacro:property name="wheel_base" value="0.140"/>
+<!-- base_link is now on the ground -->
+<!-- wheel axle height is exactly the wheel radius -->
+<xacro:property name="wheel_axle_z" value="${wheel_radius}"/>
 
-<!-- Derived, not a literal: axle sits wheel_radius above the floor line,
-     and the floor line is ground_clearance below base_link. -->
-<xacro:property name="wheel_axle_z" value="${wheel_radius - ground_clearance}"/>
+<!-- sensor offsets relative to the ground -->
+<!-- lidar sits on top of chassis at 130mm from ground -->
+<xacro:property name="lidar_offset_z" value="0.130"/>
+<!-- imu offset includes ground clearance -->
+<xacro:property name="imu_offset_z"   value="0.085"/>
 
-<!-- Sensor offsets (from base_link origin, platform bottom face) -->
-<xacro:property name="lidar_offset_z" value="0.150"/>
-<xacro:property name="imu_offset_z" value="0.065"/>
-```
-
-> `lidar_offset_z`(150mm)는 값 자체를 이번에 안 건드렸지만, `chassis_height`가 160mm→150mm로 줄면서 결과적으로 새 차체 상단면과 정확히 같은 높이가 됐다(예전엔 상단면보다 10mm 낮은 위치였음). LiDAR가 원래 상단 플레이트 위에 별도 마운트로 얹히는 구조라면 문제없지만, 실측 마운트 높이와 맞는지 한 번 확인해보는 게 좋다.
+<!-- rotated using pi to fix orientation -->
+<xacro:property name="lidar_yaw_offset" value="3.14159265"/>
 
 ---
 
